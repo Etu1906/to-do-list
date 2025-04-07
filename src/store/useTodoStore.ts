@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { addDays, isToday, isTomorrow, isAfter } from "date-fns";
+import {
+  addDays,
+  isToday,
+  isTomorrow,
+  isAfter,
+  isBefore,
+  startOfDay,
+} from "date-fns";
 
 export interface Todo {
   id: string;
@@ -12,6 +19,7 @@ export interface Todo {
 
 interface TodoStore {
   todos: Todo[];
+  overdueCount: number;
   addTodo: (title: string, scheduledFor?: Date) => void;
   toggleTodo: (id: string) => void;
   updateTodo: (id: string, updates: Partial<Todo>) => void;
@@ -20,41 +28,86 @@ interface TodoStore {
   getOverdueTodos: () => Todo[];
   getTomorrowTodos: () => Todo[];
   getUpcomingTodos: () => Todo[];
+  updateOverdueCount: () => void;
 }
+
+const isOverdue = (date: Date | null) => {
+  if (!date) return false;
+  const today = startOfDay(new Date());
+  return isBefore(date, today);
+};
 
 export const useTodoStore = create<TodoStore>()(
   persist(
     (set, get) => ({
       todos: [],
+      overdueCount: 0,
       addTodo: (title, scheduledFor) =>
-        set((state) => ({
-          todos: [
-            ...state.todos,
-            {
-              id: crypto.randomUUID(),
-              title,
-              completed: false,
-              scheduledFor: scheduledFor || null,
-              createdAt: new Date(),
-            },
-          ],
-        })),
+        set((state) => {
+          const newTodo = {
+            id: crypto.randomUUID(),
+            title,
+            completed: false,
+            scheduledFor: scheduledFor || null,
+            createdAt: new Date(),
+          };
+
+          const newOverdueCount = isOverdue(newTodo.scheduledFor)
+            ? state.overdueCount + 1
+            : state.overdueCount;
+
+          return {
+            todos: [...state.todos, newTodo],
+            overdueCount: newOverdueCount,
+          };
+        }),
       toggleTodo: (id) =>
-        set((state) => ({
-          todos: state.todos.map((todo) =>
+        set((state) => {
+          const updatedTodos = state.todos.map((todo) =>
             todo.id === id ? { ...todo, completed: !todo.completed } : todo
-          ),
-        })),
+          );
+
+          const newOverdueCount = updatedTodos.filter(
+            (todo) => !todo.completed && isOverdue(todo.scheduledFor)
+          ).length;
+
+          return {
+            todos: updatedTodos,
+            overdueCount: newOverdueCount,
+          };
+        }),
       updateTodo: (id, updates) =>
-        set((state) => ({
-          todos: state.todos.map((todo) =>
+        set((state) => {
+          const updatedTodos = state.todos.map((todo) =>
             todo.id === id ? { ...todo, ...updates } : todo
-          ),
-        })),
+          );
+
+          const newOverdueCount = updatedTodos.filter(
+            (todo) => !todo.completed && isOverdue(todo.scheduledFor)
+          ).length;
+
+          return {
+            todos: updatedTodos,
+            overdueCount: newOverdueCount,
+          };
+        }),
       deleteTodo: (id) =>
-        set((state) => ({
-          todos: state.todos.filter((todo) => todo.id !== id),
-        })),
+        set((state) => {
+          const todoToDelete = state.todos.find((todo) => todo.id === id);
+          const wasOverdue =
+            todoToDelete &&
+            !todoToDelete.completed &&
+            isOverdue(todoToDelete.scheduledFor);
+
+          const newOverdueCount = wasOverdue
+            ? state.overdueCount - 1
+            : state.overdueCount;
+
+          return {
+            todos: state.todos.filter((todo) => todo.id !== id),
+            overdueCount: newOverdueCount,
+          };
+        }),
       getTodayTodos: () => {
         const { todos } = get();
         return todos.filter(
@@ -63,13 +116,8 @@ export const useTodoStore = create<TodoStore>()(
       },
       getOverdueTodos: () => {
         const { todos } = get();
-        const now = new Date();
         return todos.filter(
-          (todo) =>
-            todo.scheduledFor &&
-            new Date(todo.scheduledFor) < now &&
-            !isToday(new Date(todo.scheduledFor)) &&
-            !todo.completed
+          (todo) => !todo.completed && isOverdue(todo.scheduledFor)
         );
       },
       getTomorrowTodos: () => {
@@ -88,6 +136,13 @@ export const useTodoStore = create<TodoStore>()(
             isAfter(new Date(todo.scheduledFor), tomorrow) &&
             !todo.completed
         );
+      },
+      updateOverdueCount: () => {
+        const { todos } = get();
+        const newOverdueCount = todos.filter(
+          (todo) => !todo.completed && isOverdue(todo.scheduledFor)
+        ).length;
+        set({ overdueCount: newOverdueCount });
       },
     }),
     {

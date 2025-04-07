@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTodoStore, Todo } from "@/store/useTodoStore";
 import { TodoSection } from "./TodoSection";
 import { addDays } from "date-fns";
@@ -30,6 +30,11 @@ export function TodoList({ defaultFilter = "all" }: TodoListProps) {
   const [newTodo, setNewTodo] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,15 +73,15 @@ export function TodoList({ defaultFilter = "all" }: TodoListProps) {
 
     return (
       <AccordionItem value={value} className="border-none">
-        <AccordionTrigger className="flex items-center gap-2 w-full p-2 bg-secondary rounded-lg hover:bg-gray-100 hover:no-underline">
-          <span className="text-md font-semibold  text-gray-700">{title}</span>
+        <AccordionTrigger className="flex items-center gap-2 w-full p-2 bg-gray-50 rounded-lg hover:bg-gray-100 hover:no-underline">
+          <span className="font-medium">{title}</span>
           <span className="ml-auto text-sm text-gray-500">
             {todos.length} tâche{todos.length > 1 ? "s" : ""}
           </span>
         </AccordionTrigger>
         <AccordionContent className="mt-2">
           <TodoSection
-            title={""}
+            title={title}
             todos={todos}
             onToggle={toggleTodo}
             onDelete={deleteTodo}
@@ -86,6 +91,24 @@ export function TodoList({ defaultFilter = "all" }: TodoListProps) {
       </AccordionItem>
     );
   };
+
+  if (!mounted) {
+    return (
+      <div className="max-w-6xl mx-10 py-4">
+        <div className="flex gap-2 mb-8">
+          <div className="flex-1 h-10 bg-gray-200 rounded-lg animate-pulse" />
+          <div className="w-32 h-10 bg-gray-200 rounded-lg animate-pulse" />
+          <div className="w-32 h-10 bg-gray-200 rounded-lg animate-pulse" />
+          <div className="w-24 h-10 bg-gray-200 rounded-lg animate-pulse" />
+        </div>
+        <div className="space-y-4">
+          <div className="h-20 bg-gray-200 rounded-lg animate-pulse" />
+          <div className="h-20 bg-gray-200 rounded-lg animate-pulse" />
+          <div className="h-20 bg-gray-200 rounded-lg animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-10 py-4">
@@ -126,9 +149,9 @@ export function TodoList({ defaultFilter = "all" }: TodoListProps) {
           defaultValue="today"
           className="space-y-4"
         >
+          {renderSection("En retard", overdueTodos, "overdue")}
           {renderSection("Aujourd'hui", todayTodos, "today")}
           {renderSection("Demain", tomorrowTodos, "tomorrow")}
-          {renderSection("En retard", overdueTodos, "overdue")}
           {renderSection("À venir", upcomingTodos, "upcoming")}
         </Accordion>
       )}
