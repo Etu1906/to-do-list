@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { addDays, isToday, isTomorrow, isAfter } from "date-fns";
 
 export interface Todo {
   id: string;
@@ -18,26 +19,8 @@ interface TodoStore {
   getTodayTodos: () => Todo[];
   getOverdueTodos: () => Todo[];
   getTomorrowTodos: () => Todo[];
+  getUpcomingTodos: () => Todo[];
 }
-
-const isToday = (date: Date) => {
-  const today = new Date();
-  return (
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
-  );
-};
-
-const isTomorrow = (date: Date) => {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return (
-    date.getDate() === tomorrow.getDate() &&
-    date.getMonth() === tomorrow.getMonth() &&
-    date.getFullYear() === tomorrow.getFullYear()
-  );
-};
 
 export const useTodoStore = create<TodoStore>()(
   persist(
@@ -93,6 +76,17 @@ export const useTodoStore = create<TodoStore>()(
         const { todos } = get();
         return todos.filter(
           (todo) => todo.scheduledFor && isTomorrow(new Date(todo.scheduledFor))
+        );
+      },
+      getUpcomingTodos: () => {
+        const { todos } = get();
+        const tomorrow = addDays(new Date(), 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        return todos.filter(
+          (todo) =>
+            todo.scheduledFor &&
+            isAfter(new Date(todo.scheduledFor), tomorrow) &&
+            !todo.completed
         );
       },
     }),

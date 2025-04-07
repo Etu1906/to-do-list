@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useTodoStore } from "@/store/useTodoStore";
 import { TodoSection } from "./TodoSection";
+import { addDays } from "date-fns";
 
 interface TodoListProps {
-  defaultFilter?: "all" | "today" | "tomorrow" | "overdue";
+  defaultFilter?: "all" | "today" | "tomorrow" | "overdue" | "upcoming";
 }
 
 export function TodoList({ defaultFilter = "all" }: TodoListProps) {
@@ -17,6 +18,7 @@ export function TodoList({ defaultFilter = "all" }: TodoListProps) {
     getTodayTodos,
     getOverdueTodos,
     getTomorrowTodos,
+    getUpcomingTodos,
   } = useTodoStore();
 
   const [newTodo, setNewTodo] = useState("");
@@ -38,9 +40,13 @@ export function TodoList({ defaultFilter = "all" }: TodoListProps) {
           scheduledFor = new Date(scheduledDate);
         }
       } else {
-        // Si aucune date n'est spécifiée, on utilise la date actuelle
+        // Si aucune date n'est spécifiée, on utilise la date par défaut selon le filtre
         scheduledFor = new Date();
         scheduledFor.setHours(0, 0, 0, 0);
+
+        if (defaultFilter === "tomorrow") {
+          scheduledFor = addDays(scheduledFor, 1);
+        }
       }
 
       addTodo(newTodo.trim(), scheduledFor);
@@ -53,6 +59,7 @@ export function TodoList({ defaultFilter = "all" }: TodoListProps) {
   const overdueTodos = getOverdueTodos();
   const todayTodos = getTodayTodos();
   const tomorrowTodos = getTomorrowTodos();
+  const upcomingTodos = getUpcomingTodos();
 
   return (
     <div className="max-w-6xl mx-10 py-4">
@@ -111,6 +118,15 @@ export function TodoList({ defaultFilter = "all" }: TodoListProps) {
             onDelete={deleteTodo}
             onUpdate={updateTodo}
           />
+          {upcomingTodos.length > 0 && (
+            <TodoSection
+              title="À venir"
+              todos={upcomingTodos}
+              onToggle={toggleTodo}
+              onDelete={deleteTodo}
+              onUpdate={updateTodo}
+            />
+          )}
         </>
       )}
 
@@ -138,6 +154,16 @@ export function TodoList({ defaultFilter = "all" }: TodoListProps) {
         <TodoSection
           title="En retard"
           todos={overdueTodos}
+          onToggle={toggleTodo}
+          onDelete={deleteTodo}
+          onUpdate={updateTodo}
+        />
+      )}
+
+      {defaultFilter === "upcoming" && (
+        <TodoSection
+          title="À venir"
+          todos={upcomingTodos}
           onToggle={toggleTodo}
           onDelete={deleteTodo}
           onUpdate={updateTodo}

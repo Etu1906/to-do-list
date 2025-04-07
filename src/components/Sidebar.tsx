@@ -1,7 +1,12 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ListTodo, AlertCircle, Calendar, CalendarCheck } from "lucide-react";
+import {
+  ListTodo,
+  Calendar,
+  Clock,
+  CalendarDays,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTodoStore } from "@/store/useTodoStore";
@@ -19,23 +24,28 @@ export function Sidebar() {
   const menuItems = [
     {
       href: "/",
-      icon: ListTodo,
       label: "Toutes les tâches",
+      icon: <ListTodo size={20} />,
     },
     {
       href: "/today",
-      icon: CalendarCheck,
       label: "Aujourd'hui",
+      icon: <Calendar size={20} />,
     },
     {
       href: "/tomorrow",
-      icon: Calendar,
       label: "Demain",
+      icon: <Clock size={20} />,
+    },
+    {
+      href: "/upcoming",
+      label: "À venir",
+      icon: <CalendarDays size={20} />,
     },
     {
       href: "/overdue",
-      icon: AlertCircle,
       label: "En retard",
+      icon: <Clock size={20} />,
       badge: overdueCount > 0 ? overdueCount : undefined,
     },
   ];
@@ -58,7 +68,7 @@ export function Sidebar() {
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <item.icon className="h-5 w-5" />
+                  {item.icon}
                   {item.label}
                 </div>
                 {item.badge ? (
