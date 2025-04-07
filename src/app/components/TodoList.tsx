@@ -24,7 +24,7 @@ export function TodoList() {
 
   const handleUpdate = (id: string) => {
     if (editingText.trim()) {
-      updateTodo(id, editingText.trim());
+      updateTodo(id, { title: editingText.trim() });
       setEditingId(null);
     }
   };
