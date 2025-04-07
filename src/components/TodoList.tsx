@@ -1,9 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useTodoStore } from "@/store/useTodoStore";
+import { useTodoStore, Todo } from "@/store/useTodoStore";
 import { TodoSection } from "./TodoSection";
 import { addDays } from "date-fns";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface TodoListProps {
   defaultFilter?: "all" | "today" | "tomorrow" | "overdue" | "upcoming";
@@ -31,16 +37,12 @@ export function TodoList({ defaultFilter = "all" }: TodoListProps) {
       let scheduledFor: Date | undefined;
 
       if (scheduledDate) {
-        // Si une date est spécifiée
         if (scheduledTime) {
-          // Si une heure est spécifiée
           scheduledFor = new Date(`${scheduledDate}T${scheduledTime}`);
         } else {
-          // Si seule la date est spécifiée, on utilise minuit
           scheduledFor = new Date(scheduledDate);
         }
       } else {
-        // Si aucune date n'est spécifiée, on utilise la date par défaut selon le filtre
         scheduledFor = new Date();
         scheduledFor.setHours(0, 0, 0, 0);
 
@@ -60,6 +62,30 @@ export function TodoList({ defaultFilter = "all" }: TodoListProps) {
   const todayTodos = getTodayTodos();
   const tomorrowTodos = getTomorrowTodos();
   const upcomingTodos = getUpcomingTodos();
+
+  const renderSection = (title: string, todos: Todo[], value: string) => {
+    if (todos.length === 0) return null;
+
+    return (
+      <AccordionItem value={value} className="border-none">
+        <AccordionTrigger className="flex items-center gap-2 w-full p-2 bg-secondary rounded-lg hover:bg-gray-100 hover:no-underline">
+          <span className="text-md font-semibold  text-gray-700">{title}</span>
+          <span className="ml-auto text-sm text-gray-500">
+            {todos.length} tâche{todos.length > 1 ? "s" : ""}
+          </span>
+        </AccordionTrigger>
+        <AccordionContent className="mt-2">
+          <TodoSection
+            title={""}
+            todos={todos}
+            onToggle={toggleTodo}
+            onDelete={deleteTodo}
+            onUpdate={updateTodo}
+          />
+        </AccordionContent>
+      </AccordionItem>
+    );
+  };
 
   return (
     <div className="max-w-6xl mx-10 py-4">
@@ -94,40 +120,17 @@ export function TodoList({ defaultFilter = "all" }: TodoListProps) {
       </form>
 
       {defaultFilter === "all" && (
-        <>
-          {overdueTodos.length > 0 && (
-            <TodoSection
-              title="En retard"
-              todos={overdueTodos}
-              onToggle={toggleTodo}
-              onDelete={deleteTodo}
-              onUpdate={updateTodo}
-            />
-          )}
-          <TodoSection
-            title="Aujourd'hui"
-            todos={todayTodos}
-            onToggle={toggleTodo}
-            onDelete={deleteTodo}
-            onUpdate={updateTodo}
-          />
-          <TodoSection
-            title="Demain"
-            todos={tomorrowTodos}
-            onToggle={toggleTodo}
-            onDelete={deleteTodo}
-            onUpdate={updateTodo}
-          />
-          {upcomingTodos.length > 0 && (
-            <TodoSection
-              title="À venir"
-              todos={upcomingTodos}
-              onToggle={toggleTodo}
-              onDelete={deleteTodo}
-              onUpdate={updateTodo}
-            />
-          )}
-        </>
+        <Accordion
+          type="single"
+          collapsible
+          defaultValue="today"
+          className="space-y-4"
+        >
+          {renderSection("Aujourd'hui", todayTodos, "today")}
+          {renderSection("Demain", tomorrowTodos, "tomorrow")}
+          {renderSection("En retard", overdueTodos, "overdue")}
+          {renderSection("À venir", upcomingTodos, "upcoming")}
+        </Accordion>
       )}
 
       {defaultFilter === "today" && (
