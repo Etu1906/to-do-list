@@ -27,9 +27,22 @@ export function TodoList({ defaultFilter = "all" }: TodoListProps) {
     e.preventDefault();
     if (newTodo.trim()) {
       let scheduledFor: Date | undefined;
-      if (scheduledDate && scheduledTime) {
-        scheduledFor = new Date(`${scheduledDate}T${scheduledTime}`);
+
+      if (scheduledDate) {
+        // Si une date est spécifiée
+        if (scheduledTime) {
+          // Si une heure est spécifiée
+          scheduledFor = new Date(`${scheduledDate}T${scheduledTime}`);
+        } else {
+          // Si seule la date est spécifiée, on utilise minuit
+          scheduledFor = new Date(scheduledDate);
+        }
+      } else {
+        // Si aucune date n'est spécifiée, on utilise la date actuelle
+        scheduledFor = new Date();
+        scheduledFor.setHours(0, 0, 0, 0);
       }
+
       addTodo(newTodo.trim(), scheduledFor);
       setNewTodo("");
       setScheduledDate("");

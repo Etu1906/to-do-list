@@ -1,4 +1,4 @@
-import { TodoList } from "./components/TodoList";
+import { TodoList } from "@/components/TodoList";
 import { MobileSidebar } from "@/components/MobileSidebar";
 
 export default function Home() {
@@ -9,7 +9,7 @@ export default function Home() {
           <MobileSidebar />
           <h1 className="text-3xl mx-10 font-bold text-primary">Mes tâches</h1>
         </div>
-        <TodoList />
+        <TodoList defaultFilter="all" />
       </div>
     </main>
   );

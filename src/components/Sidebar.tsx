@@ -5,11 +5,16 @@ import { ListTodo, AlertCircle, Calendar, CalendarCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTodoStore } from "@/store/useTodoStore";
+import { useEffect, useState } from "react";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { getOverdueTodos } = useTodoStore();
-  const overdueTodos = getOverdueTodos();
+  const [overdueCount, setOverdueCount] = useState(0);
+
+  useEffect(() => {
+    setOverdueCount(getOverdueTodos().length);
+  }, [getOverdueTodos]);
 
   const menuItems = [
     {
@@ -31,7 +36,7 @@ export function Sidebar() {
       href: "/overdue",
       icon: AlertCircle,
       label: "En retard",
-      badge: overdueTodos.length > 0 ? overdueTodos.length : undefined,
+      badge: overdueCount > 0 ? overdueCount : undefined,
     },
   ];
 
@@ -56,11 +61,11 @@ export function Sidebar() {
                   <item.icon className="h-5 w-5" />
                   {item.label}
                 </div>
-                {item.badge && (
+                {item.badge ? (
                   <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                     {item.badge}
                   </span>
-                )}
+                ) : null}
               </Link>
             ))}
           </div>
